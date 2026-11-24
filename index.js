@@ -128,27 +128,22 @@ function watchFile(filePath, updateCallback) {
 watchFile("./premium.json", (data) => (premiumUsers = data));
 watchFile("./admin.json", (data) => (adminUsers = data));
 
-const GITHUB_TOKEN_LIST_URL =
-  "https://raw.githubusercontent.com/senzy444/v10new/refs/heads/main/tokens.json";
-
-async function fetchValidTokens() {
-  try {
-    const response = await axios.get(GITHUB_TOKEN_LIST_URL);
-    return response.data.tokens;
-  } catch (error) {
-    console.error(
-      chalk.red("❌ Gagal mengambil daftar token dari GitHub:", error.message)
-    );
-    return [];
-  }
-}
-
 async function validateToken() {
   console.log(chalk.blue("🔍 Memeriksa apakah token bot valid..."));
 
-  const validTokens = await fetchValidTokens();
-  if (!validTokens.includes(BOT_TOKEN)) {
-    console.log(chalk.red("❌ Token tidak valid! Bot tidak dapat dijalankan."));
+  try {
+    const response = await axios.get(
+      `https://api.telegram.org/bot${BOT_TOKEN}/getMe`
+    );
+    if (!response.data?.ok) {
+      throw new Error(response.data?.description || "Telegram rechazó el token");
+    }
+  } catch (error) {
+    console.log(
+      chalk.red(
+        `❌ Token de Telegram no válido o no disponible: ${error.message}`
+      )
+    );
     process.exit(1);
   }
 
@@ -1988,5 +1983,4 @@ bot.onText(/\/delbot (.+)/, async (msg, match) => {
     );
   }
 });
-
 
